@@ -748,7 +748,7 @@ namespace Plims.Controllers
         /// 
 
         [HttpGet]
-        public ActionResult ServicesClockIn(View_ServicesClocktime obj, string[] EmployeeIDchk , string TableData , string SectionSelect,DateTime TransactionDate)
+        public ActionResult ServicesClockIn(View_ServicesClocktime obj, string[] EmployeeIDchk , string TableData, string LineID, string SectionSelect,DateTime TransactionDate)
         {
 
             int PlantID = Convert.ToInt32(HttpContext.Session.GetString("PlantID"));
@@ -806,16 +806,37 @@ namespace Plims.Controllers
             {
                 // Create Function
                 int datacnt = EmployeeIDchk.Count();
-
+               // decimal rateservicecheck = 0.0;
 
                 List<TableDataRow> tableRows = JsonConvert.DeserializeObject<List<TableDataRow>>(TableData);
-
-
-
-                for (int i = 0; i < datacnt; ++i)
+                var distinctServices = new HashSet<decimal>();
+                int j = 0;
+                //check service rate before Add
+                foreach (var itmservice in tableRows)
                 {
+                    var servicesplit = itmservice.Service.Split(":");
+                    var servicerate = db.TbService.Where(x => x.PlantID.Equals(PlantID) && x.LineID.Equals(LineID) && x.ServicesID.Equals(servicesplit[0])).Select(x => x.ServicesRate).SingleOrDefault();
+                    decimal rate = Convert.ToDecimal(servicerate);
+                    if (servicesplit.Length > 0)
+                    {
+                        // Add the first part of the service split to the HashSet
+                        distinctServices.Add(rate);
+                    }
 
-                    foreach(var itmservice in tableRows)
+                    j++;
+                }
+
+                if(distinctServices.Count > 1 )
+                {
+                    TempData["AlertMessage"] = "Rate Differnence !";
+                    return View(Employee);
+                }
+
+
+                    for (int i = 0; i < datacnt; ++i)
+                {
+                 
+                    foreach (var itmservice in tableRows)
                     {
                         var Empdb = new TbServicesTransaction();
                         string empid = EmployeeIDchk[i];
@@ -832,10 +853,6 @@ namespace Plims.Controllers
                             remark = "";
                         }
 
-                        //check service rate before Add
-                        var servicerate = db.TbService.Where(x => x.PlantID.Equals(PlantID) && x.LineID.Equals(Empdb.Line) && x.SectionID.Equals(sectionsplit[0]) && x.ServicesID.Equals(servicesplit[0])).Select(x=>x.ServicesRate).ToList();
-                       
-                        
                         ////////////////////////// select service normal case //////////////////////////////////
 
                         var empdbcheck = db.TbEmployeeTransaction

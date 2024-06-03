@@ -250,7 +250,7 @@
                 </div>
             </div>
             <div class="row" style="height:20px"></div>
-            <div class="row" style="height:80px">
+            <div class="row" style="height:80px"></div>
                 <div class="col-2" style=" align-content: center;"></div>
                 <div class="col-8">
                     <p id="demo" style="color:red ; height:30px"></p>
@@ -474,6 +474,9 @@
 </div>
 
 <script>
+
+
+
 
     // Modal FG
     $(document).ready(function () {
@@ -744,11 +747,10 @@
       /// Fillter Create
     function filterReasonByProduct() {
         // Clear previous options
-        $("#ReasonDefect").empty();;
+        $("#ReasonDefect").empty();
         // Add a default option
         $("#ReasonDefect").append("<option value='' default selected>Please Select ..</option>");
         // Get the selected Line ID
-
         var selectedProductID = $("#ProductIDDefect").val().toString();
         // Check if a line is selected
    //     alert(selectedProductID);
@@ -777,16 +779,18 @@
 
 
     //////////////////// 30042024 FANG ///////////////////////////////////////
+
     function filterSectionsByProductEdit() {
+        console.log('0');
         // Clear previous options
         $("#ProductIDDefect").empty();
         // Add a default option
         $("#ProductIDDefect").append("<option value='' default selected>Please Select ..</option>");
-
+        console.log('1');
         // Get the selected Product ID
 
         var selectedEmpID = $("#EmployeeIDDefect").val().toString();
-       // var selectedLineID = $("#ModalLineName").val().toString();
+        // var selectedLineID = $("#ModalLineName").val().toString();
 
         // Check if a product is selected
         if (selectedEmpID !== "") {
@@ -808,6 +812,7 @@
             });
         }
     }
+
 
 
     function filterProductByEmployeeClockin() {

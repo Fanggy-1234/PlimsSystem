@@ -211,9 +211,9 @@
         var serviceID = $('#btnEdit[data-id="' + ID + '"]').data('service-id');
 
     // Use the retrieved data as needed, for example:
-    console.log("Employee ID: " + ID);
-    console.log("Section ID: " + sectionID);
-    console.log("Service ID: " + serviceID);
+    // console.log("Employee ID: " + ID);
+    // console.log("Section ID: " + sectionID);
+    // console.log("Service ID: " + serviceID);
 
 
         $.ajax({
@@ -552,7 +552,7 @@
                 <div class="col">
                     <select class="selectfillter form-control"name="LineID" id="LineID" style="width:100%">
                         <option value="" default selected></option>
-                        @foreach (var item in Model.tbLine)
+                        @foreach (var item in Model.tbLine.Where(x => x.Status.Equals(1)))
                         {
 
                             <option value="@item.LineID">@Html.DisplayFor(modelItem => item.LineID) :  @Html.DisplayFor(modelItem => item.LineName) </option>
@@ -573,7 +573,7 @@
                     <select class="selectfillter form-control" list="SectionID" name="SectionID" id="SectionID" style="width:100%">
                         <option value="" default selected></option>
                         <option value="ALL"> ALL</option>
-                        @foreach (var item in Model.tbSection)
+                        @foreach (var item in Model.tbSection.Where(x=>x.Status.Equals(1)))
                         {
 
                             <option value="@item.SectionID">@Html.DisplayFor(modelItem => item.SectionID) :  @Html.DisplayFor(modelItem => item.SectionName) </option>
@@ -596,10 +596,10 @@
                 <div class="col">
                     <select class="selectfillter form-control" list="ServicesID" name="ServicesID" id="ServicesID" style="width:100%">
                         <option value="" default selected></option>
-                        @foreach (var item in Model.tbService)
+                        @foreach (var item in Model.tbService.Where(x => x.ServicesStatus.Equals(1)))
                         {
 
-                            <option value="@item.ServicesID">@Html.DisplayFor(modelItem => item.ServicesID) :  @Html.DisplayFor(modelItem => item.ServicesName) </option>
+                            <option value="@item.ServicesID">@Html.DisplayFor(modelItem => item.ServicesID) :  @Html.DisplayFor(modelItem => item.ServicesName)   </option>
                         }
                     </select>
                 </div>
