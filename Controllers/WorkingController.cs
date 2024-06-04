@@ -1018,7 +1018,7 @@ namespace Plims.Controllers
 
         //DateTime startDate, DateTime endDate,
         [HttpGet]
-        public async Task<IActionResult> DailyReport(string EmployeeID , DateTime StartDate , DateTime EndDate , string LineID ,string SectionID)
+        public async Task<IActionResult> DailyReport(string EmployeeID , DateTime StartDate , DateTime EndDate , string LineID ,string SectionID,string Prefix)
         {
             int PlantID = Convert.ToInt32(HttpContext.Session.GetString("PlantID"));
             string EmpID = HttpContext.Session.GetString("UserEmpID");
@@ -1033,6 +1033,7 @@ namespace Plims.Controllers
                 tbEmployeeMaster = db.TbEmployeeMaster.Where(x => x.PlantID == PlantID).ToList(),
                 tbLine = db.TbLine.Where(x => x.PlantID == PlantID).ToList(),
                 tbSection = db.TbSection.Where(x => x.PlantID == PlantID).ToList(),
+                tbShift = db.TbShift.Where(x => x.PlantID == PlantID).ToList(),
                 view_PermissionMaster = db.View_PermissionMaster.Where(x => x.PlantID == PlantID).ToList(),
                 view_DailyReportSummary = db.View_DailyReportSummary.Where(x => x.PlantID.Equals(PlantID)).ToList()
             };
@@ -1046,7 +1047,7 @@ namespace Plims.Controllers
 
 
            
-            if (!string.IsNullOrEmpty(EmployeeID) || !string.IsNullOrEmpty(LineID) || !string.IsNullOrEmpty(SectionID) || StartDate != DateTime.MinValue || EndDate != DateTime.MinValue)
+            if (!string.IsNullOrEmpty(EmployeeID) || !string.IsNullOrEmpty(LineID) || !string.IsNullOrEmpty(SectionID) || !string.IsNullOrEmpty(Prefix) || StartDate != DateTime.MinValue || EndDate != DateTime.MinValue)
             {
 
 
@@ -1067,6 +1068,12 @@ namespace Plims.Controllers
                     mymodel.view_DailyReportSummary = mymodel.view_DailyReportSummary.Where(x => x.SectionID == SectionID).ToList();
                     ViewBag.SelectedSectionID = SectionID;
                 }
+                if (!string.IsNullOrEmpty(Prefix))
+                {
+                    mymodel.view_DailyReportSummary = mymodel.view_DailyReportSummary.Where(x => x.Prefix == Prefix).ToList();
+                    ViewBag.SelectedPrefix = Prefix;
+                }
+
                 if ( StartDate != DateTime.MinValue && EndDate != DateTime.MinValue)
                 {
                      mymodel.view_DailyReportSummary = mymodel.view_DailyReportSummary
@@ -1182,8 +1189,9 @@ namespace Plims.Controllers
                 tbEmployeeMaster = db.TbEmployeeMaster.Where(x => x.PlantID == PlantID).ToList(),
                 tbLine = db.TbLine.Where(x => x.PlantID == PlantID).ToList(),
                 tbSection = db.TbSection.Where(x => x.PlantID == PlantID).ToList(),
+                tbShift = db.TbShift.Where(x => x.PlantID == PlantID).ToList(),
                 view_PermissionMaster = db.View_PermissionMaster.Where(x => x.PlantID == PlantID).ToList(),
-                view_DailyReportSummary = db.View_DailyReportSummary.Where(x => x.PlantID == PlantID).ToList(),
+                view_DailyReportSummary = db.View_DailyReportSummary.Where(x => x.PlantID.Equals(PlantID)).ToList()
             };
 
             ViewBag.VBRoleDailyReport = mymodel.view_PermissionMaster
@@ -1219,8 +1227,9 @@ namespace Plims.Controllers
                     tbEmployeeMaster = db.TbEmployeeMaster.Where(x => x.PlantID == PlantID).ToList(),
                     tbLine = db.TbLine.Where(x => x.PlantID == PlantID).ToList(),
                     tbSection = db.TbSection.Where(x => x.PlantID == PlantID).ToList(),
+                    tbShift = db.TbShift.Where(x => x.PlantID == PlantID).ToList(),
                     view_PermissionMaster = db.View_PermissionMaster.Where(x => x.PlantID == PlantID).ToList(),
-                    view_DailyReportSummary = db.View_DailyReportSummary.Where(x => x.PlantID == PlantID).ToList(),
+                    view_DailyReportSummary = db.View_DailyReportSummary.Where(x => x.PlantID.Equals(PlantID)).ToList()
 
                 };
 

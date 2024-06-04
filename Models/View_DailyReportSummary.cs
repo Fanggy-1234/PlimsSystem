@@ -19,6 +19,7 @@ namespace Plims.Models
         public string EmployeeName { get; set; }
         public string EmployeeLastName { get; set; }
         public string ShiftName { get; set; }
+        public string Prefix { get; set; }
         [Key]
         public string ProductID { get; set; }
         public string ProductName { get; set; }

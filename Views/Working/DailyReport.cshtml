@@ -203,10 +203,20 @@
 
                         </div>
 
-                        <div class="col-1"></div>
-                        <div class="col-2" style=" padding-top:0.5em"></div>
+                        <div class="col-1"></div> 
+                <div class="col-2" style=" padding-top:0.5em"><label class="FillterLabel">  Prefix:</label></div>
                         <div class="col-3">
-        
+                    <select class="selectfillter form-control" style="width:100%" name="Prefix" id="Prefix">
+                        <option value="" default selected></option>
+                        @foreach (var Prefixgroup in Model.tbShift.GroupBy(x => x.Prefix))
+                        {
+                            var line = Prefixgroup.First(); // Take the first item in the group
+                            <option value="@line.Prefix" selected="@(line.Prefix == ViewBag.SelectedPrefix ? "selected" : null)">
+                                @Html.DisplayFor(modelItem => line.Prefix)
+                            </option>
+
+                        }
+                    </select>
                         </div>
 
                     </div>

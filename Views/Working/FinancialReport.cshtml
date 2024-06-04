@@ -50,18 +50,26 @@
 
     #table_id tr {
         text-align: left;
-        padding: initial;
+        padding: 0px; 
+        width: 100%;
     }
 
     #table_id th, #table_id td {
         border: 0.5px solid #F5F5F5;
         border-collapse: collapse;
+      
     }
 
     table.dataTable thead th, table.dataTable tbody td {
-        padding: 8px 10px;
+       padding: 0px 10px; 
         box-sizing: border-box;
     }
+
+    .dataTables_scrollHeadInner,
+    .table {
+        width: 100% ;
+    }
+
 </style>
 
 
@@ -86,7 +94,7 @@
             lengthMenu: [10, 25, 50, 75, 100],
             pageLength: 10,
             paging: true,
-            fixedColumns: false
+            fixedColumns: true
         });
 
         // Adjust column width calculations
@@ -212,9 +220,9 @@
     <div class="row" style="height:20px"></div>
 
     @*//////////////////////////////////////Diaplay data tabel ////////////////////////////////////////*@
-    <table id="table_id" class="table table-hover ;width:100%">
+    <table id="table_id" class="table table-hover">
         <thead style="background-color:lightgrey">
-            <tr >
+            <tr style="width:100%">
                 <th rowspan="2" style="width:150px">Employee ID</th>
                 <th rowspan="2" style="width:200px">Employee Name</th>
 
@@ -233,7 +241,7 @@
                     }
             </tr>
         </thead>
-        <tbody style="width:100%">
+        <tbody>
             @if (Model.groupedData != null && Model.groupedData.Any())
             {
                 var groupedByEmployeeAndSection = Model.groupedData.GroupBy(x => new { x.QRCode , x.SectionName });
@@ -263,7 +271,8 @@
             else
             {
                 <tr style="width:100%">
-                    <td colspan="100%">No data available.</td>
+                    <td >No data available.</td>
+                   @*  <td colspan="100%">No data available.</td> *@
                 </tr>
             }
         </tbody>
