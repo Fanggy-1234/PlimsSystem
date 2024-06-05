@@ -351,10 +351,15 @@ namespace Plims.Controllers
             var EmplID = db.View_EmployeeClocktime.Where(x => x.ID.Equals(ID)).Select(x => x.EmployeeID).SingleOrDefault();
 
             DateTime parsedTodayDate = DateTime.ParseExact(todayDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+            DateTime parsedTodayDateBefore = DateTime.ParseExact(todayDate, "yyyy-MM-dd", CultureInfo.InvariantCulture).AddDays(-1);
+
+            //var Emps = db.TbEmployeeTransaction
+            //    .Where(x => x.EmployeeID.Equals(EmplID) && x.TransactionDate.Date.Equals(parsedTodayDate.Date) && (x.Remark == null || x.Remark == "") && x.WorkingStatus.Equals("Working"))
+            //    .SingleOrDefault();
 
             var Emps = db.TbEmployeeTransaction
-                .Where(x => x.EmployeeID.Equals(EmplID) && x.TransactionDate.Date.Equals(parsedTodayDate.Date) && (x.Remark == null || x.Remark == "") && x.WorkingStatus.Equals("Working"))
-                .SingleOrDefault();
+               .Where(x => x.EmployeeID.Equals(EmplID) && ( (x.TransactionDate.Date.Equals(parsedTodayDate.Date) && (x.Remark == null || x.Remark == "") && x.WorkingStatus.Equals("Working")) || (x.TransactionDate.Date.Equals(parsedTodayDateBefore.Date) && (x.Remark == null || x.Remark == "") && x.WorkingStatus.Equals("Working"))))
+               .SingleOrDefault();
 
 
             return Json(Emps);

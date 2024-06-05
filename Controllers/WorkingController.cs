@@ -1617,118 +1617,126 @@ namespace Plims.Controllers
                 var currentDateTime = DateTime.Now;
                 var currentDate = currentDateTime.Date;
                 var currentTime = currentDateTime.TimeOfDay;
+                var currentDatebefore = currentDateTime.Date.AddDays(-1);
                 string sectionval = "";
                 try
                 {
                     //check employee or Group
                     if(db.TbEmployeeMaster.Where(x => x.EmployeeID.Equals(employeeId)).Count() != 0) // case Employee
                     {
-                        //Select EmployeeTransaction
-                        //var objEmp = db.TbEmployeeTransaction
-                        //.Where(x => x.EmployeeID.Equals(employeeId) &&
-                        //            x.TransactionDate.Date == currentDate &&
-                        //            x.Plant.Equals(PlantID))
-                        //.OrderByDescending(x => x.TransactionNo)
-                        //.FirstOrDefault();
 
+                        //Check EmployeeClockin
+                     
+                       var objEmpcount = db.View_ClockTime.Where(x => x.EmployeeID.Equals(employeeId) &&
+                                                                              (x.TransactionDate.Date == currentDate || x.TransactionDate.Date == currentDatebefore) &&
+                                                                              x.PlantID.Equals(PlantID) &&
+                                                                               (((x.ClockOut == null || x.ClockOut == "") && x.Remark == "") ||
+                                                                               ((x.ClockOut != null || x.ClockOut != "") && x.Remark == "Adjust")  )).ToList();
 
-                                    var objEmp = db.View_ClockTime
-                     .Where(x => x.EmployeeID.Equals(employeeId) &&
-                                 x.TransactionDate.Date == currentDate &&
-                                 x.PlantID.Equals(PlantID) &&
-                                 (((x.ClockOut == null || x.ClockOut == "") && x.Remark == "") ||
-                                    ((x.ClockOut != null || x.ClockOut != "") && x.Remark == "Adjust")  ))
-                     .FirstOrDefault();
-
-
-
-                        if (objEmp != null)
+                        if (objEmpcount.Count > 1)
                         {
-                            var objPLPS = db.View_PLPS
-                            .Where(x => x.PlantID.Equals(PlantID) &&
-                                        x.LineID.Equals(objEmp.LineID.ToString()) &&
-                                        x.ProductID.Equals(productId) &&
-                                        x.SectionID.Equals(objEmp.SectionID.ToString()))
-                            .FirstOrDefault();
-                            // check formular for insert or return to enter Employee
-                            if(objPLPS == null)
-                            {
-                                var section = "Please check PLPS";
-                                return Json(section);
-                            }
-                            if(objPLPS.FormularID == 10)
-                            {
-                                var section = "EmployeeRefSectionEnabled";
-                                return Json(section);
-                            }
-                            else
-                            {
-                                if (objPLPS != null)
-                                {
-                                    var LastTransactionTime = db.TbProductionTransaction
-                                   .Where(x => x.QRCode.Equals(employeeId) && x.TransactionDate.Date == currentDate)
-                                   .OrderByDescending(x => x.TransactionDate)
-                                   .Select(x => x.TransactionDate.TimeOfDay)
-                                   .FirstOrDefault();
-
-
-                                    // Convert TimeSpan to total seconds
-                                    double lastTransactionSeconds = LastTransactionTime.TotalSeconds;
-                                    double delayTimeSeconds = Convert.ToDouble(objPLPS.Delaytime);
-                                    double difftime = ((lastTransactionSeconds + delayTimeSeconds)- currentTime.TotalSeconds);
-                                    double roundedDifftime = Math.Round(difftime, 2);
-
-                                    if (lastTransactionSeconds + delayTimeSeconds < currentTime.TotalSeconds)
-                                    {
-                                        // Perform actions if LastTransactionTime is greater than or equal to objPLPS.Delaytime                  
-                                        db.TbProductionTransaction.Add(new TbProductionTransaction()
-                                        {
-                                            // TransactionNo = db.TbProductionTransaction.Count() + 1,
-                                            TransactionDate = DateTime.Now,
-                                            PlantID = Convert.ToInt32(objEmp.PlantID),
-                                            LineID = objEmp.LineID,
-                                            SectionID = objEmp.SectionID,
-                                            ProductID = productId,
-                                            Prefix = objEmp.Prefix,
-                                            QRCode = employeeId,
-                                            Qty = 1,
-                                            QtyPerQR = Convert.ToInt32(objPLPS.QTYPerQRCode),//Get from PLPS
-                                            DataType = "Count",
-                                            Reason = "",
-                                            Note = "",
-                                            PackageRef = 0,
-                                            EmployeeRef = string.IsNullOrEmpty(EmployeeRef) ? "" : EmployeeRef,
-                                            GroupRef = "",
-                                            CreateDate = DateTime.Now,
-                                            CreateBy = EmpID,
-                                            UpdateDate = DateTime.Now,
-                                            UpdateBy = EmpID
-                                        });
-                                        db.SaveChanges();
-                                        sectionval = objEmp.SectionID.ToString() + " : " + objPLPS.SectionName.ToString();
-                                        return Json(sectionval);
-
-                                    }
-                                    else
-                                    {
-                                       // TempData["AlertMessage"] = "please check time!";
-                                        var sectionvalalert = "check time : " + roundedDifftime + " Sec.";
-                                        return Json(sectionvalalert);
-                                    }
-                                }
-                                else
-                                {
-                                    var sectionvalalert = "Check Master PLPS";
-                                    return Json(sectionvalalert);
-                                }
-                            }
-                            
-                           
+                            TempData["AlertMessage"] = "Please check clock out!";
+                            return Json(mymodel);
                         }
                         else
                         {
-                            var sectionvalalert = "Check Clock in time";
-                            return Json(sectionvalalert);
+                            var objEmp = db.View_ClockTime
+                          .Where(x => x.EmployeeID.Equals(employeeId) &&
+                                       (x.TransactionDate.Date == currentDate || x.TransactionDate.Date == currentDatebefore) &&
+                                      x.PlantID.Equals(PlantID) &&
+                                      (((x.ClockOut == null || x.ClockOut == "") && x.Remark == "") ||
+                                         ((x.ClockOut != null || x.ClockOut != "") && x.Remark == "Adjust")))
+                          .FirstOrDefault();
+
+                            if (objEmp != null)
+                            {
+                                var objPLPS = db.View_PLPS
+                                .Where(x => x.PlantID.Equals(PlantID) &&
+                                            x.LineID.Equals(objEmp.LineID.ToString()) &&
+                                            x.ProductID.Equals(productId) &&
+                                            x.SectionID.Equals(objEmp.SectionID.ToString()))
+                                .FirstOrDefault();
+
+                                // check formular for insert or return to enter Employee
+                                if (objPLPS == null)
+                                {
+                                    var section = "Please check PLPS";
+                                    return Json(section);
+                                }
+                                if (objPLPS.FormularID == 10)
+                                {
+                                    var section = "EmployeeRefSectionEnabled";
+                                    return Json(section);
+                                }
+                                else
+                                {
+                                    if (objPLPS != null)
+                                    {
+                                        var LastTransactionTime = db.TbProductionTransaction
+                                       .Where(x => x.QRCode.Equals(employeeId) && x.TransactionDate.Date == currentDate)
+                                       .OrderByDescending(x => x.TransactionDate)
+                                       .Select(x => x.TransactionDate.TimeOfDay)
+                                       .FirstOrDefault();
+
+
+                                        // Convert TimeSpan to total seconds
+                                        double lastTransactionSeconds = LastTransactionTime.TotalSeconds;
+                                        double delayTimeSeconds = Convert.ToDouble(objPLPS.Delaytime);
+                                        double difftime = ((lastTransactionSeconds + delayTimeSeconds) - currentTime.TotalSeconds);
+                                        double roundedDifftime = Math.Round(difftime, 2);
+
+                                        if (lastTransactionSeconds + delayTimeSeconds < currentTime.TotalSeconds)
+                                        {
+                                            // Perform actions if LastTransactionTime is greater than or equal to objPLPS.Delaytime                  
+                                            db.TbProductionTransaction.Add(new TbProductionTransaction()
+                                            {
+                                                // TransactionNo = db.TbProductionTransaction.Count() + 1,
+                                                TransactionDate = objEmp.TransactionDate,//DateTime.Now,
+                                                PlantID = Convert.ToInt32(objEmp.PlantID),
+                                                LineID = objEmp.LineID,
+                                                SectionID = objEmp.SectionID,
+                                                ProductID = productId,
+                                                Prefix = objEmp.Prefix,
+                                                QRCode = employeeId,
+                                                Qty = 1,
+                                                QtyPerQR = Convert.ToInt32(objPLPS.QTYPerQRCode),//Get from PLPS
+                                                DataType = "Count",
+                                                Reason = "",
+                                                Note = "",
+                                                PackageRef = 0,
+                                                EmployeeRef = string.IsNullOrEmpty(EmployeeRef) ? "" : EmployeeRef,
+                                                GroupRef = "",
+                                                CreateDate = DateTime.Now,
+                                                CreateBy = EmpID,
+                                                UpdateDate = DateTime.Now,
+                                                UpdateBy = EmpID
+                                            });
+                                            db.SaveChanges();
+                                            sectionval = objEmp.SectionID.ToString() + " : " + objPLPS.SectionName.ToString();
+                                            return Json(sectionval);
+
+                                        }
+                                        else
+                                        {
+                                            // TempData["AlertMessage"] = "please check time!";
+                                            var sectionvalalert = "check time : " + roundedDifftime + " Sec.";
+                                            return Json(sectionvalalert);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        var sectionvalalert = "Check Master PLPS";
+                                        return Json(sectionvalalert);
+                                    }
+                                }
+
+
+                            }
+                            else
+                            {
+                                var sectionvalalert = "Check Clock in time";
+                                return Json(sectionvalalert);
+                            }
                         }
                         //End case employee
                     }
@@ -1789,7 +1797,7 @@ namespace Plims.Controllers
                                         db.TbProductionTransaction.Add(new TbProductionTransaction()
                                         {
                                             // TransactionNo = db.TbProductionTransaction.Count() + 1,
-                                            TransactionDate = DateTime.Now,
+                                            TransactionDate = objEmp.TransactionDate,//DateTime.Now,
                                             PlantID = Convert.ToInt32(objEmp.PlantID),
                                             LineID = objEmp.LineID,
                                             SectionID = objEmp.SectionID,
@@ -1880,36 +1888,53 @@ namespace Plims.Controllers
                 var currentDateTime = DateTime.Now;
                 var currentDate = currentDateTime.Date;
                 var currentTime = currentDateTime.TimeOfDay;
+                var currentDatebefore = currentDateTime.Date.AddDays(-1);
                 string sectionval = "";
                 try
                 {
                     //check employee or Group
                     if (db.TbEmployeeMaster.Where(x => x.EmployeeID.Equals(employeeId)).Count() != 0) // case Employee
                     {
-                        //Select EmployeeTransaction
-                        var objEmp = db.TbEmployeeTransaction
-                        .Where(x => x.EmployeeID.Equals(employeeId) &&
-                                    x.TransactionDate.Date == currentDate &&
-                                    x.Plant.Equals(PlantID))
-                        .OrderByDescending(x => x.TransactionNo)
-                        .FirstOrDefault();
-                        if (objEmp != null)
-                        {
-                            var objPLPS = db.View_PLPS
-                            .Where(x => x.PlantID.Equals(PlantID) &&
-                                        x.LineID.Equals(objEmp.Line.ToString()) &&
-                                        x.ProductID.Equals(productId) &&
-                                        x.SectionID.Equals(objEmp.Section.ToString()))
-                            .FirstOrDefault();
+                        //Check EmployeeClockin
 
-                            var objproductSTD = db.View_ProductSTD
-                          .Where(x => x.PlantID.Equals(PlantID) &&
-                                      x.LineID.Equals(objEmp.Line.ToString()) &&
-                                      x.ProductID.Equals(productId) &&
-                                      x.SectionID.Equals(objEmp.Section.ToString()))
+                        var objEmpcount = db.View_ClockTime.Where(x => x.EmployeeID.Equals(employeeId) &&
+                                                                               (x.TransactionDate.Date == currentDate || x.TransactionDate.Date == currentDatebefore) &&
+                                                                               x.PlantID.Equals(PlantID) &&
+                                                                                (((x.ClockOut == null || x.ClockOut == "") && x.Remark == "") ||
+                                                                                ((x.ClockOut != null || x.ClockOut != "") && x.Remark == "Adjust"))).ToList();
+
+                        if (objEmpcount.Count > 1)
+                        {
+                            TempData["AlertMessage"] = "Please check clock out!";
+                            return Json(mymodel);
+                        }
+                        else
+                        {
+                            var objEmp = db.View_ClockTime
+                          .Where(x => x.EmployeeID.Equals(employeeId) &&
+                                       (x.TransactionDate.Date == currentDate || x.TransactionDate.Date == currentDatebefore) &&
+                                      x.PlantID.Equals(PlantID) &&
+                                      (((x.ClockOut == null || x.ClockOut == "") && x.Remark == "") ||
+                                         ((x.ClockOut != null || x.ClockOut != "") && x.Remark == "Adjust")))
                           .FirstOrDefault();
 
-                            if (objPLPS != null && objproductSTD != null)
+                            if (objEmp != null)
+                            {
+                                var objPLPS = db.View_PLPS
+                                 .Where(x => x.PlantID.Equals(PlantID) &&
+                                             x.LineID.Equals(objEmp.LineID.ToString()) &&
+                                             x.ProductID.Equals(productId) &&
+                                             x.SectionID.Equals(objEmp.SectionID.ToString()))
+                                 .FirstOrDefault();
+
+                                var objproductSTD = db.View_ProductSTD
+                              .Where(x => x.PlantID.Equals(PlantID) &&
+                                          x.LineID.Equals(objEmp.LineID.ToString()) &&
+                                          x.ProductID.Equals(productId) &&
+                                          x.SectionID.Equals(objEmp.SectionID.ToString()))
+                              .FirstOrDefault();
+
+                                if (objPLPS != null && objproductSTD != null)
                                 {
                                     var LastTransactionTime = db.TbProductionTransaction
                                    .Where(x => x.QRCode.Equals(employeeId) && x.TransactionDate.Date == currentDate)
@@ -1928,10 +1953,10 @@ namespace Plims.Controllers
                                         db.TbProductionTransaction.Add(new TbProductionTransaction()
                                         {
                                             // TransactionNo = db.TbProductionTransaction.Count() + 1,
-                                            TransactionDate = DateTime.Now,
-                                            PlantID = Convert.ToInt32(objEmp.Plant),
-                                            LineID = objEmp.Line,
-                                            SectionID = objEmp.Section,
+                                            TransactionDate = objEmp.TransactionDate, //DateTime.Now,
+                                            PlantID = Convert.ToInt32(objEmp.PlantID),
+                                            LineID = objEmp.LineID,
+                                            SectionID = objEmp.SectionID,
                                             ProductID = productId,
                                             QRCode = employeeId,
                                             Qty = 1,
@@ -1948,7 +1973,7 @@ namespace Plims.Controllers
                                             UpdateBy = EmpID
                                         });
                                         db.SaveChanges();
-                                        sectionval = objEmp.Section.ToString() + " : " + objPLPS.SectionName.ToString();
+                                        sectionval = objEmp.SectionID.ToString() + " : " + objPLPS.SectionName.ToString();
                                         return Json(sectionval);
 
                                     }
@@ -1956,8 +1981,8 @@ namespace Plims.Controllers
                                     {
                                         TempData["AlertMessage"] = "please check time!";
                                         var sectionvalalert = "check time";
-                                    ViewBag.ErrorAlert = "please check time!";
-                                    return Json(sectionvalalert);
+                                        ViewBag.ErrorAlert = "please check time!";
+                                        return Json(sectionvalalert);
                                     }
                                 }
                                 else
@@ -1965,16 +1990,17 @@ namespace Plims.Controllers
                                     var sectionvalalert = "Check Master PLPS And ProductSTD";
                                     return Json(sectionvalalert);
                                 }
-                            
 
 
+
+                            }
+                            else
+                            {
+                                var sectionvalalert = "Check Clock in time";
+                                return Json(sectionvalalert);
+                            }
+                            //End case employee
                         }
-                        else
-                        {
-                            var sectionvalalert = "Check Clock in time";
-                            return Json(sectionvalalert);
-                        }
-                        //End case employee
                     }
                     else  // case group
                     {
@@ -1984,74 +2010,90 @@ namespace Plims.Controllers
                         foreach (var item in objgroup)
                         {
 
-                            //Select EmployeeTransaction
-                            var objEmp = db.TbEmployeeTransaction
-                            .Where(x => x.EmployeeID.Equals(item.EmployeeID) &&
-                                        x.TransactionDate.Date == currentDate &&
-                                        x.Plant.Equals(PlantID))
-                            .OrderByDescending(x => x.TransactionNo)
-                            .FirstOrDefault();
-                            if (objEmp != null)
+                            //Check EmployeeClockin
+
+                            var objEmpcount = db.View_ClockTime.Where(x => x.EmployeeID.Equals(employeeId) &&
+                                                                                   (x.TransactionDate.Date == currentDate || x.TransactionDate.Date == currentDatebefore) &&
+                                                                                   x.PlantID.Equals(PlantID) &&
+                                                                                    (((x.ClockOut == null || x.ClockOut == "") && x.Remark == "") ||
+                                                                                    ((x.ClockOut != null || x.ClockOut != "") && x.Remark == "Adjust"))).ToList();
+
+                            if (objEmpcount.Count > 1)
                             {
-                                var objPLPS = db.View_PLPS
-                                .Where(x => x.PlantID.Equals(PlantID) &&
-                                            x.LineID.Equals(objEmp.Line.ToString()) &&
-                                            x.ProductID.Equals(productId) &&
-                                            x.SectionID.Equals(objEmp.Section.ToString()))
-                                .FirstOrDefault();
-
-                                if (objPLPS != null)
+                                TempData["AlertMessage"] = "Please check clock out!";
+                                return Json(mymodel);
+                            }
+                            else
+                            {
+                                var objEmp = db.View_ClockTime
+                              .Where(x => x.EmployeeID.Equals(employeeId) &&
+                                           (x.TransactionDate.Date == currentDate || x.TransactionDate.Date == currentDatebefore) &&
+                                          x.PlantID.Equals(PlantID) &&
+                                          (((x.ClockOut == null || x.ClockOut == "") && x.Remark == "") ||
+                                             ((x.ClockOut != null || x.ClockOut != "") && x.Remark == "Adjust")))
+                              .FirstOrDefault();
+                                if (objEmp != null)
                                 {
-                                    var LastTransactionTime = db.TbProductionTransaction
-                                   .Where(x => x.QRCode.Equals(objEmp.EmployeeID) && x.TransactionDate.Date == currentDate)
-                                   .OrderByDescending(x => x.TransactionDate)
-                                   .Select(x => x.TransactionDate.TimeOfDay)
-                                   .FirstOrDefault();
+                                    var objPLPS = db.View_PLPS
+                                    .Where(x => x.PlantID.Equals(PlantID) &&
+                                                x.LineID.Equals(objEmp.LineID.ToString()) &&
+                                                x.ProductID.Equals(productId) &&
+                                                x.SectionID.Equals(objEmp.SectionID.ToString()))
+                                    .FirstOrDefault();
 
-
-                                    // Convert TimeSpan to total seconds
-                                    double lastTransactionSeconds = LastTransactionTime.TotalSeconds;
-                                    double delayTimeSeconds = Convert.ToDouble(objPLPS.Delaytime);
-
-                                    if (lastTransactionSeconds + delayTimeSeconds < currentTime.TotalSeconds)
+                                    if (objPLPS != null)
                                     {
-                                        // Perform actions if LastTransactionTime is greater than or equal to objPLPS.Delaytime                  
-                                        db.TbProductionTransaction.Add(new TbProductionTransaction()
+                                        var LastTransactionTime = db.TbProductionTransaction
+                                       .Where(x => x.QRCode.Equals(objEmp.EmployeeID) && x.TransactionDate.Date == currentDate)
+                                       .OrderByDescending(x => x.TransactionDate)
+                                       .Select(x => x.TransactionDate.TimeOfDay)
+                                       .FirstOrDefault();
+
+
+                                        // Convert TimeSpan to total seconds
+                                        double lastTransactionSeconds = LastTransactionTime.TotalSeconds;
+                                        double delayTimeSeconds = Convert.ToDouble(objPLPS.Delaytime);
+
+                                        if (lastTransactionSeconds + delayTimeSeconds < currentTime.TotalSeconds)
                                         {
-                                            // TransactionNo = db.TbProductionTransaction.Count() + 1,
-                                            TransactionDate = DateTime.Now,
-                                            PlantID = Convert.ToInt32(objEmp.Plant),
-                                            LineID = objEmp.Line,
-                                            SectionID = objEmp.Section,
-                                            ProductID = productId,
-                                            QRCode = objEmp.EmployeeID,
-                                            Qty = 1,
-                                            QtyPerQR = Convert.ToInt32(objPLPS.QTYPerQRCode),//Get from PLPS
-                                            DataType = "Count",
-                                            Reason = "",
-                                            Note = "",
-                                            PackageRef = PackageRef,
-                                            EmployeeRef = string.IsNullOrEmpty(EmployeeRef) ? "" : EmployeeRef,
-                                            GroupRef = employeeId,
-                                            CreateDate = DateTime.Now,
-                                            CreateBy = EmpID,
-                                            UpdateDate = DateTime.Now,
-                                            UpdateBy = EmpID
-                                        });
-                                        db.SaveChanges();
-                                        sectionval = objEmp.Section.ToString();
+                                            // Perform actions if LastTransactionTime is greater than or equal to objPLPS.Delaytime                  
+                                            db.TbProductionTransaction.Add(new TbProductionTransaction()
+                                            {
+                                                // TransactionNo = db.TbProductionTransaction.Count() + 1,
+                                                TransactionDate = objEmp.TransactionDate,// DateTime.Now,
+                                                PlantID = Convert.ToInt32(objEmp.PlantID),
+                                                LineID = objEmp.LineID,
+                                                SectionID = objEmp.SectionID,
+                                                ProductID = productId,
+                                                QRCode = objEmp.EmployeeID,
+                                                Qty = 1,
+                                                QtyPerQR = Convert.ToInt32(objPLPS.QTYPerQRCode),//Get from PLPS
+                                                DataType = "Count",
+                                                Reason = "",
+                                                Note = "",
+                                                PackageRef = PackageRef,
+                                                EmployeeRef = string.IsNullOrEmpty(EmployeeRef) ? "" : EmployeeRef,
+                                                GroupRef = employeeId,
+                                                CreateDate = DateTime.Now,
+                                                CreateBy = EmpID,
+                                                UpdateDate = DateTime.Now,
+                                                UpdateBy = EmpID
+                                            });
+                                            db.SaveChanges();
+                                            sectionval = objEmp.SectionID.ToString();
 
 
-                                    }
-                                    else
-                                    {
-                                        TempData["AlertMessage"] = "please check time!";
-                                        var sectionvalalert = "check time";
-                                        return Json(sectionvalalert);
+                                        }
+                                        else
+                                        {
+                                            TempData["AlertMessage"] = "please check time!";
+                                            var sectionvalalert = "check time";
+                                            return Json(sectionvalalert);
+                                        }
                                     }
                                 }
-                            }
 
+                            }
                         }
 
                         return Json(sectionval);
